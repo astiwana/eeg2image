@@ -5,8 +5,8 @@ import cv2
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-#from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-#from brainflow.data_filter import DataFilter, FilterTypes, AggOperations, WindowOperations, DetrendOperations
+from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
+from brainflow.data_filter import DataFilter, FilterTypes, AggOperations, WindowOperations, DetrendOperations
 
 # Load CIFAR-10 batch
 def unpickle(file):
@@ -97,7 +97,7 @@ class ImageDisplayGUI(QMainWindow):
     def __init__(self):
         super(ImageDisplayGUI, self).__init__()
         
-        #self.eeg_manager = EEGManager()
+        self.eeg_manager = EEGManager()
         self.dataset_image = []
         self.dataset_label = []
         self.dataset_eeg = []
@@ -166,10 +166,10 @@ class ImageDisplayGUI(QMainWindow):
                         rgb_reshaped = np.reshape(image_data, (32, 32, 3), order='F')
                         rotated_image = np.rot90(rgb_reshaped, 3)
                         label_index = labels[self.current_image_index - 1]
-                        #eeg_signal = self.eeg_manager.get_data(2)
+                        eeg_signal = self.eeg_manager.get_data(2)
                         self.dataset_image.append(rotated_image)
                         self.dataset_label.append(label_index)
-                        self.dataset_eeg.append(1)
+                        self.dataset_eeg.append(eeg_signal)
                     self.show_white_screen = True
                     self.current_image_index += 1
                 else:
