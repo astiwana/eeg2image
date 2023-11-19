@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import pickle
+import requests
 import cv2
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -158,7 +159,7 @@ class ImageDisplayGUI(QMainWindow):
                 self.white_screen_timer.start(500)  # Set the white screen duration in milliseconds (500 ms = 0.5 seconds)
             else:
                 if self.current_image_index < len(data):
-                    self.current_image_index=numpy.random.randint(0,len(data))
+                    self.current_image_index=np.random.randint(0,len(data))
                     image_data = data[self.current_image_index]
                     label_index = label_names[labels[self.current_image_index]]
                     label_index = label_index.decode('UTF-8')
@@ -175,7 +176,7 @@ class ImageDisplayGUI(QMainWindow):
                         self.dataset_eeg.append(eeg_signal)
                     self.show_white_screen = True
                     self.current_image_index += 1
-                    save_dataset(self)
+                    self.save_dataset()
                     #self.current_image_index=len(data)
                 else:
                     self.timer.stop()  # Stop the timer when all images are displayed
@@ -195,10 +196,11 @@ class ImageDisplayGUI(QMainWindow):
 
         eeg = np.asarray(self.dataset_eeg)
         #print(eeg.shape)  # (15, 400)
+        self.paused = True
+        #put your servers ip here:
         r = requests.post('http://127.0.0.1:3289/', json={'eeg': eeg.tolist()})
         print(r.json())
         self.dataset_eeg = []
-        self.paused = True
         
         #np.save("data/dataset_image.npy", self.dataset_image)
         #np.save("data/dataset_label.npy", dataset_label)
