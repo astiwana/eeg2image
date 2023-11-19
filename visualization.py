@@ -11,7 +11,6 @@ class K_means:
     def transform(self, embed, gt_labels):
         pred_labels = KMeans(n_clusters=self.n_clusters, n_init=10, random_state=self.random_state).fit_predict(embed)
         score       = self.cluster_acc(gt_labels, pred_labels)
-        # image_score = K_means_model.score(image_embed, KMeans(n_clusters=self.n_clusters, random_state=self.random_state).fit_predict(image_embed))
         return score
 
     # Thanks to: https://github.com/k-han/DTC/blob/master/utils/util.py
