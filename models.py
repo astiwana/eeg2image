@@ -14,18 +14,9 @@ class EEGFeatNet(nn.Module):
 
     def forward(
         self,
-        pixel_values: Optional[torch.FloatTensor] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+        x
     ):
-        device = next(self.parameters()).device
-
-        x = pixel_values
-        h_n = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
-        c_n = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
-
-        _, (h_n, c_n) = self.encoder(x, (h_n, c_n))
+        _, (h_n, c_n) = self.encoder(x)
         x = h_n[-1]
 
         x = self.fc(x)
