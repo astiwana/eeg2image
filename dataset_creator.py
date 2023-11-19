@@ -26,6 +26,7 @@ label_names = meta_data[b'label_names']
 class EEGManager:
     def __init__(self) -> None:
         params = BrainFlowInputParams()
+        params.serial_port = "COM3"
         self.board_id = BoardIds.GANGLION_BOARD
 
         self.board = BoardShim(self.board_id, params)
@@ -41,9 +42,9 @@ class EEGManager:
         data = self.board.get_current_board_data(n_samples)
 
         eeg_channels = BoardShim.get_eeg_channels(self.board_id)
-
-        DataFilter.detrend(data[eeg_channels], DetrendOperations.CONSTANT.value)
-        DataFilter.perform_bandpass(data[eeg_channels], sampling_rate, 0.5, 55.0, 2,
+        for channel in eeg_channels:
+            DataFilter.detrend(data[channel], DetrendOperations.CONSTANT.value)
+            DataFilter.perform_bandpass(data[channel], sampling_rate, 0.5, 55.0, 2,
                                     FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
 
         return data
@@ -98,6 +99,7 @@ class ImageDisplayGUI(QMainWindow):
         super(ImageDisplayGUI, self).__init__()
         
         self.eeg_manager = EEGManager()
+        self.eeg_manager.start()
         self.dataset_image = []
         self.dataset_label = []
         self.dataset_eeg = []
@@ -190,9 +192,9 @@ class ImageDisplayGUI(QMainWindow):
 
         dataset_label = np.asarray(self.dataset_label)
         dataset_eeg = np.asarray(self.dataset_eeg)
-        np.save("dataset_image.npy", self.dataset_image)
-        np.save("dataset_label.npy", dataset_label)
-        np.save("dataset_eeg.npy", dataset_eeg)
+        np.save("data/dataset_image.npy", self.dataset_image)
+        np.save("data/dataset_label.npy", dataset_label)
+        np.save("data/dataset_eeg.npy", dataset_eeg)
 
 def main():
     app = QApplication([])
