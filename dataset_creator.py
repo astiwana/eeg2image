@@ -5,6 +5,8 @@ import cv2
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+#from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
+#from brainflow.data_filter import DataFilter, FilterTypes, AggOperations, WindowOperations, DetrendOperations
 
 # Load CIFAR-10 batch
 def unpickle(file):
@@ -95,9 +97,11 @@ class ImageDisplayGUI(QMainWindow):
     def __init__(self):
         super(ImageDisplayGUI, self).__init__()
         
-        self.eeg_manager = EEGManager()
-        self.dataset = []
-        
+        #self.eeg_manager = EEGManager()
+        self.dataset_image = []
+        self.dataset_label = []
+        self.dataset_eeg = []
+
         self.label_index = QLabel(self)
         self.label_index.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
         self.label_index.setStyleSheet("background-color: white; padding: 5px;")  # Optional styling
@@ -119,6 +123,10 @@ class ImageDisplayGUI(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.display_next_image)
         self.timer.start(2000)  # Set the timer interval in milliseconds (2000 ms = 2 seconds)
+
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save_dataset)
+        self.main_layout.addWidget(self.save_button, 2, 0)
 
         self.pause_button = QPushButton("Pause", self)
         self.pause_button.clicked.connect(self.pause_timer)
@@ -155,11 +163,13 @@ class ImageDisplayGUI(QMainWindow):
                     self.label_index.setText(f"Count: {self.current_image_index}")
                     if self.current_image_index != 0:
                         image_data = data[self.current_image_index - 1]
-                        label_index = label_names[labels[self.current_image_index - 1]]
-                        label_index = label_index.decode('UTF-8')
-                        eeg_signal = self.eeg_manager.get_data(2)
-                        self.dataset.append((image_data, label_index, eeg_signal))
-                        print(self.dataset)
+                        rgb_reshaped = np.reshape(image_data, (32, 32, 3), order='F')
+                        rotated_image = np.rot90(rgb_reshaped, 3)
+                        label_index = labels[self.current_image_index - 1]
+                        #eeg_signal = self.eeg_manager.get_data(2)
+                        self.dataset_image.append(rotated_image)
+                        self.dataset_label.append(label_index)
+                        self.dataset_eeg.append(1)
                     self.show_white_screen = True
                     self.current_image_index += 1
                 else:
@@ -175,6 +185,14 @@ class ImageDisplayGUI(QMainWindow):
     def resume_timer(self):
         self.paused = False
         self.timer.start(2000)  # Restart the timer when resuming
+
+    def save_dataset(self):
+
+        dataset_label = np.asarray(self.dataset_label)
+        dataset_eeg = np.asarray(self.dataset_eeg)
+        np.save("dataset_image.npy", self.dataset_image)
+        np.save("dataset_label.npy", dataset_label)
+        np.save("dataset_eeg.npy", dataset_eeg)
 
 def main():
     app = QApplication([])
