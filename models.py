@@ -12,7 +12,6 @@ class EEGFeatNet(nn.Module):
         self.encoder = nn.LSTM(input_size=n_channels, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
         self.fc = nn.Linear(in_features=self.hidden_size, out_features=projection_dim, bias=False)
 
-
     def forward(
         self,
         pixel_values: Optional[torch.FloatTensor] = None,
@@ -20,8 +19,8 @@ class EEGFeatNet(nn.Module):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ):
+        device = next(self.parameters()).device
 
-        device = self.parameters()
         x = pixel_values
         h_n = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
         c_n = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
@@ -29,9 +28,44 @@ class EEGFeatNet(nn.Module):
         _, (h_n, c_n) = self.encoder(x, (h_n, c_n))
         x = h_n[-1]
 
+        x = self.fc(x)
+        
         x = F.normalize(x, dim=-1)
 
         return x
     
-model = EEGFeatNet(1, 1, 1 ,1)
-model()
+class ClassificationHead(nn.Module):
+    def __init__(
+        self, 
+        hidden_size: int,
+        num_classes: int = 10,
+        ):
+        super().__init__()
+        self.classifier = nn.Linear(hidden_size, num_classes)
+
+    def forward(
+        self, 
+        feats: torch.Tensor,
+        ) -> torch.Tensor:
+        out = self.classifier(feats)
+        return out
+
+if __name__ == "__main__":
+    n_epochs = 100
+    batch_size = 256
+    n_features = 128
+    projection_dim = 128
+    weight_decay = 1e-4
+    lr = 1e-3
+
+    n_channels = 5
+    seq_len = 200
+    n_classes = 10
+
+    vis_freq = 10
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
+    device = "cpu"
+    eeg = torch.randn((batch_size, seq_len, n_channels)).to(device)
+    model = EEGFeatNet(n_channels=n_channels, n_features=n_features, projection_dim=projection_dim).to(device)
