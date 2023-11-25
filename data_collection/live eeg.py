@@ -28,7 +28,7 @@ class EEGManager:
     def __init__(self) -> None:
         params = BrainFlowInputParams()
         params.serial_port = "COM3"
-        self.board_id = BoardIds.GANGLION_BOARD
+        self.board_id = BoardIds.SYNTHETIC_BOARD
 
         self.board = BoardShim(self.board_id, params)
 
