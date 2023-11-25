@@ -4,34 +4,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class EEGFeatNet(nn.Module):
-    def __init__(self, n_channels, n_features, projection_dim, num_layers=1, bidirectional=True):
-        super(EEGFeatNet, self).__init__()
-        self.hidden_size = n_features
-        self.num_layers = num_layers
+    def __init__(self, n_channels, hidden_size, num_layers=3, dropout=0.1) -> None:
+        super().__init__()
 
-        self.encoder = nn.LSTM(
-            n_channels, 
-            self.hidden_size, 
-            num_layers=self.num_layers, 
+        self.bilstm = nn.LSTM(
+            n_channels,
+            hidden_size,
+            num_layers,
             batch_first=True,
-            bidirectional=bidirectional
-            )
-        
-        n_directions = 2 if bidirectional else 1
-        self.fc = nn.Linear(self.hidden_size * n_directions, projection_dim)
+            dropout=dropout,
+            bidirectional=True
+        )
 
-    def forward(
-        self,
-        x
-    ):
-        _, (h_n, c_n) = self.encoder(x)
-        x = h_n[-1]
+    def forward(self, x):
+        out, _ = self.bilstm(x)
 
-        x = self.fc(x)
-        
-        x = F.normalize(x, dim=-1)
-
-        return x
+        return out.reshape(out.shape[0], -1)
     
 class EEGCNN(nn.Module):
     def __init__(self, in_channels, out1, out2, kernel_size=3) -> None:
@@ -56,17 +44,14 @@ class ClassificationHead(nn.Module):
         num_classes: int = 10,
         ):
         super().__init__()
-        self.fc1 = nn.Linear(hidden_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, num_classes)
+        self.fc = nn.Linear(hidden_size, num_classes)
 
     def forward(
         self, 
         feats: torch.Tensor,
         ) -> torch.Tensor:
-        out = self.fc1(feats)
-        out = self.relu(out)
-        out = self.fc2(feats)
+        out = self.fc(feats)
+
         return out
 
 if __name__ == "__main__":
