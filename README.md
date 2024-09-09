@@ -1,6 +1,6 @@
 # Mind Reader
 
-My team and I developed this project during NatHacks 2023, where we earned 3rd place in the Research track.
+My team and I developed this project during NatHacks 2023 Hackathon, where we earned 3rd place in the Research track.
 
 ## Introduction
 
